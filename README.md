@@ -19,7 +19,7 @@ Descriptions and expanded article extracts are reproduced from Wikipedia contrib
 - Search names, common names, genera, and places mentioned in article introductions.
 - Filter by genus or switch between species, genera, and all entries.
 - Load the collection in groups of 24; images load lazily.
-- Independent frond layers sway and respond to pointer position.
+- Each intact watercolor sways from its stem and responds to pointer position with a damped spring; its paper background stays ivory during motion.
 - A card's fern moves into the centered native dialog when opened.
 - Wind can be paused; reduced-motion preferences disable animation.
 - Native modal keyboard behavior, close controls, and focus restoration.

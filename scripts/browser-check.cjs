@@ -8,6 +8,39 @@ const assert=require('node:assert/strict');
  await page.evaluate(()=>document.fonts.ready);
  await page.screenshot({path:'/private/tmp/fern-check/desktop.png'});
  assert.equal(await page.locator('.card').count(),24);
+ const first=page.locator('.card').first();
+ await first.scrollIntoViewIfNeeded();
+ assert.equal(await first.locator('.specimen img').count(),1,'Artwork remains a single image');
+ assert.equal(await first.locator('.frond').evaluate(e=>getComputedStyle(e).clipPath),'none');
+ const box=await first.locator('.specimen').boundingBox();
+ const baseColor=await first.evaluate(e=>getComputedStyle(e).backgroundColor);
+ async function assertIvory(){
+  const shot=await first.locator('.specimen').screenshot();
+  const whitePixels=await page.evaluate(async encoded=>{
+   const img=new Image();img.src='data:image/png;base64,'+encoded;await img.decode();
+   const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+   const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);const {data}=ctx.getImageData(0,0,canvas.width,canvas.height);
+   let count=0;for(let i=0;i<data.length;i+=4)if(data[i]>250&&data[i+1]>250&&data[i+2]>250)count++;
+   return count;
+  },shot.toString('base64'));
+  assert.equal(whitePixels,0,'No white image rectangle during hover');
+ }
+ await page.mouse.move(box.x+box.width*.85,box.y+box.height*.2);
+ await page.waitForTimeout(250);
+ assert.notEqual(await first.locator('.rustle').evaluate(e=>getComputedStyle(e).transform),'none');
+ assert.equal(await first.evaluate(e=>getComputedStyle(e).backgroundColor),baseColor);
+ await assertIvory();
+ await first.screenshot({path:'/private/tmp/fern-check/hover-right.png'});
+ await page.mouse.move(box.x+box.width*.15,box.y+box.height*.3,{steps:12});
+ await page.waitForTimeout(200);await assertIvory();
+ await first.screenshot({path:'/private/tmp/fern-check/hover-left.png'});
+ await page.mouse.move(10,10);await page.waitForTimeout(1800);
+ assert.equal(await first.locator('.rustle').evaluate(e=>e.style.transform),'','Spring settles after pointer leaves');
+ await page.mouse.move(box.x+box.width*.85,box.y+box.height*.2);await page.waitForTimeout(100);
+ await page.evaluate(()=>document.querySelector('#wind').click());
+ assert.equal(await first.locator('.rustle').evaluate(e=>e.style.transform),'','Wind-off cancels the spring');
+ await page.evaluate(()=>document.querySelector('#wind').click());
+
  await page.locator('.card').first().click();
  await page.waitForTimeout(650);
  assert.equal(await page.locator('#detail').evaluate(e=>e.open),true);
@@ -27,5 +60,5 @@ const assert=require('node:assert/strict');
  await page.emulateMedia({reducedMotion:'reduce'});
  assert.equal(await page.locator('.frond').first().evaluate(e=>getComputedStyle(e).animationName),'none');
  assert.deepEqual(errors,[]);
- await browser.close();console.log('PASS: desktop/mobile rendering, card dialog, Escape, focus restoration, search, pagination, wind, reduced motion, no mobile overflow, no JavaScript errors.');
+ await browser.close();console.log('PASS: desktop/mobile rendering, card dialog, Escape, focus restoration, search, pagination, wind, reduced motion, no mobile overflow, no JavaScript errors; intact hover image, spring settling and ivory pixels.');
 })().catch(e=>{console.error(e);process.exit(1)});
