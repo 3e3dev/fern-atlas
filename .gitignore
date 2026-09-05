@@ -1,0 +1,5 @@
+.DS_Store
+references/
+assets/*.png
+node_modules/
+_site/
